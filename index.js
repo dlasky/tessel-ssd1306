@@ -217,7 +217,7 @@ function Screen(hardware, options, callback) {
 
   this.i2c = new this.hardware.I2C(this.options.slaveAddr || 0x3c);
   this._init();
-  // this.flood();
+  this.flood();
   this.test2();
   // this.invert(true);
   this.brightness(0x44);
@@ -286,6 +286,18 @@ Screen.prototype = {
       if (err) { console.log("Error"); }
     });
   },
+  _sendData: function(data) {
+   this.ssd1306_command(0x21); // columns
+   this.ssd1306_command(0);
+   this.ssd1306_command(127);
+   this.ssd1306_command(0x22); // rows
+   this.ssd1306_command(0);
+   this.ssd1306_command(7);
+    var b = new Buffer([0x40]);
+    this.i2c.send(Buffer.concat(b, data), function(err) {
+      if (err) { console.log("Error sending data"); }
+    })
+  }
   ssd1306_command: function(c) {
     this._sendCommand(c);
   },
