@@ -39,7 +39,7 @@ var SSD1306_CHARGEPUMP = 0x8D;
 var SSD1306_EXTERNALVCC = 0x1;
 var SSD1306_SWITCHCAPVCC = 0x2;
 
-var fnt = new Buffer([0x40,
+var fnt = new Buffer([
    0x00,0x00,0x00,0x00,0x00,0x00,  // ASCII -  32 20 ' '
    0x00,0x00,0x2f,0x00,0x00,0x00,  // ASCII -  33 21 '!'
    0x00,0x07,0x00,0x07,0x00,0x00,  // ASCII -  34 22 '"'
@@ -137,8 +137,8 @@ var fnt = new Buffer([0x40,
    0x08,0x08,0x2a,0x1c,0x08,0x00,  // ASCII - 126 7e ->
    0x08,0x1c,0x2a,0x08,0x08,0x00 // ASCII - 127 7f <-
 ]);
-
-var buffer = new Buffer([0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+/*
+var buffer = new Buffer([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
@@ -202,7 +202,7 @@ var buffer = new Buffer([0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x000]);
-
+*/
 function Screen(hardware, options, callback) {
   this.hardware = hardware;
 
@@ -217,11 +217,15 @@ function Screen(hardware, options, callback) {
 
   this.i2c = new this.hardware.I2C(this.options.slaveAddr || 0x3c);
   this._init();
-  this.flood();
-  this.test2();
+  // this.test3();
+  this.rawText("Hello World!");
+  // this.flood();
+  // this.test2();
   // this.invert(true);
-  this.brightness(0x44);
+  // this.brightness(0x44);
 }
+
+util.inherits(Screen, EventEmitter);
 
 Screen.prototype = {
 
@@ -234,8 +238,8 @@ Screen.prototype = {
    this.ssd1306_command(7);
 
     this.i2c.send(buffer, function(err) {
-      if (err) console.log("failed")
-    })
+      if (err) console.log("failed");
+    });
   },
 
   test2: function() {
@@ -247,8 +251,12 @@ Screen.prototype = {
    this.ssd1306_command(7);
 
     this.i2c.send(fnt, function(err) {
-      if (err) console.log("failed")
-    })
+      if (err) console.log("failed");
+    });
+  },
+
+  test3: function() {
+    this._sendData(fnt);
   },
 
   _init: function() {
@@ -281,7 +289,7 @@ Screen.prototype = {
   },
   _sendCommand: function(comm) {
     var b = new Buffer([0x80,comm]);
-    console.log(b);
+    // console.log(b);
     this.i2c.send(b, function(err) { 
       if (err) { console.log("Error"); }
     });
@@ -294,10 +302,10 @@ Screen.prototype = {
    this.ssd1306_command(0);
    this.ssd1306_command(7);
     var b = new Buffer([0x40]);
-    this.i2c.send(Buffer.concat(b, data), function(err) {
+    this.i2c.send(Buffer.concat([b, data]), function(err) {
       if (err) { console.log("Error sending data"); }
-    })
-  }
+    });
+  },
   ssd1306_command: function(c) {
     this._sendCommand(c);
   },
@@ -311,9 +319,22 @@ Screen.prototype = {
   flood:function() {
     this.ssd1306_command(SSD1306_DISPLAYALLON);
   },
+  clear: function() {
+    var b = new Buffer(128*64/8);
+    b.fill(0x00);
+    this._sendData(b);
+  },
   brightness:function(brightness) {
     this.ssd1306_command(SSD1306_SETCONTRAST);
     this.ssd1306_command(brightness || 0xFF);
+  },
+  rawText:function(input) {
+    var b = new Buffer(128*64/8);
+    input.split("").map(function(c, i) {
+      var cd = c.charCodeAt(0)-32;
+      fnt.copy(b, i*6, cd*6, cd*6+6); 
+    });
+    this._sendData(b);
   }
 };
 
