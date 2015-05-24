@@ -290,14 +290,14 @@ Screen.prototype._init = function() {
 	self._sendCommand(0x40);
 	self._sendCommand(SSD1306_DISPLAYALLON_RESUME);           // 0xA4
 	self._sendCommand(SSD1306_NORMALDISPLAY);
-	self._sendCommand(SSD1306_DISPLAYON, function() {
+	self._sendCommand(SSD1306_DISPLAYON)
+	setImmediate( function() {
 		self.emit("ready");
 	});
 };
 
 Screen.prototype._sendCommand =  function(comm, cb) {
 		var b = new Buffer([0x80,comm]);
-		// console.log(b);
 		this.i2c.send(b, function(err) { 
 			if (err) { 
 				console.log("Error"); 
@@ -318,7 +318,6 @@ Screen.prototype._sendData = function(data) {
 	 self._sendCommand(0);
 	 self._sendCommand(7);
 	 var b = new Buffer([0x40]);
-	 b.fill(0x00);
 	 self.i2c.send(Buffer.concat([b, data]), function(err) {
 			if (err) { console.log("Error sending data"); }
 		});
@@ -343,6 +342,7 @@ Screen.prototype.brightness = function(brightness) {
 		this._sendCommand(brightness || 0xFF);
 	};
 Screen.prototype.rawText = function(input) {
+	console.log("rawText:",input);
 		var b = new Buffer(128*64/8);
 		input.split("").map(function(c, i) {
 			var cd = c.charCodeAt(0)-32;
