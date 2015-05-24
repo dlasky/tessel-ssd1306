@@ -1,0 +1,23 @@
+{
+  "name": "tessel-ssd1306",
+  "version": "0.0.1",
+  "description": "Display library for tessel and ssd1306 displays",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dlasky/tessel-ssd1306.git"
+  },
+  "keywords": [
+    "tessel",
+    "ssd1306",
+    "oled"
+  ],
+  "author": "dlasky",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/dlasky/tessel-ssd1306/issues"
+  }
+}
