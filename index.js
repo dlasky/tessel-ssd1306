@@ -223,48 +223,13 @@ function Screen(hardware, options, callback) {
 
 	this.i2c = new this.hardware.I2C(this.options.slaveAddr || 0x3c);
 	this._init();
-	// this.test3();
-	// this.rawText("Hello World!");
-	// this.flood();
-	// this.test2();
-	// this.invert(true);
-	// this.brightness(0x44);
 }
 
 util.inherits(Screen, EventEmitter);
 
-Screen.prototype.test = function() {
-	 this._sendCommand(0x21); // columns
-	 this._sendCommand(0);
-	 this._sendCommand(127);
-	 this._sendCommand(0x22); // rows
-	 this._sendCommand(0);
-	 this._sendCommand(7);
-
-		this.i2c.send(buffer, function(err) {
-			if (err) console.log("failed");
-		});
-};
-
-Screen.prototype.test2 = function() {
-	 this._sendCommand(0x21); // columns
-	 this._sendCommand(0);
-	 this._sendCommand(127);
-	 this._sendCommand(0x22); // rows
-	 this._sendCommand(0);
-	 this._sendCommand(7);
-
-		this.i2c.send(font, function(err) {
-			if (err) console.log("failed");
-		});
-};
-
-Screen.prototype.test3 = function() {
-		this._sendData(font);
-};
-
 Screen.prototype._init = function() {
 	var self = this;
+	self.buffer = new Buffer(1024);
 	self._sendCommand(SSD1306_DISPLAYOFF);                    // 0xAE
 	self._sendCommand(0x2E);                                  // 0xAE
 	self._sendCommand(SSD1306_SETDISPLAYCLOCKDIV);            // 0xD5
@@ -321,35 +286,45 @@ Screen.prototype._sendData = function(data) {
 	 self.i2c.send(Buffer.concat([b, data]), function(err) {
 			if (err) { console.log("Error sending data"); }
 		});
-	};
+};
 Screen.prototype.invert = function(bool) {
 		if (bool) {
 			this._sendCommand(SSD1306_INVERTDISPLAY);
 		} else {
 			this._sendCommand(SSD1306_NORMALDISPLAY);
 		}
-	};
+};
 Screen.prototype.flood = function() {
-		this._sendCommand(SSD1306_DISPLAYALLON);
-	};
+	this._sendCommand(SSD1306_DISPLAYALLON);
+};
 Screen.prototype.clear = function() {
-		var b = new Buffer(128*64/8);
-		b.fill(0x00);
-		this._sendData(b);
-	};
+	this.buffer.fill(0x00);
+	this._sendData(b);
+};
 Screen.prototype.brightness = function(brightness) {
-		this._sendCommand(SSD1306_SETCONTRAST);
-		this._sendCommand(brightness || 0xFF);
-	};
-Screen.prototype.rawText = function(input) {
-	console.log("rawText:",input);
-		var b = new Buffer(128*64/8);
-		input.split("").map(function(c, i) {
-			var cd = c.charCodeAt(0)-32;
-			font.copy(b, i*6, cd*6, cd*6+6); 
-		});
-		this._sendData(b);
-	};
+	this._sendCommand(SSD1306_SETCONTRAST);
+	this._sendCommand(brightness || 0xFF);
+};
+Screen.prototype.rawText = function(input, clear) {
+	if (clear)
+		this.buffer.fill(0x00);
+	input = input +"";
+	input.split("").forEach(function(c, i) {
+		var cd = c.charCodeAt(0)-32;
+		font.copy(this.buffer, i*6, cd*6, cd*6+6); 
+	},this);
+	this._sendData(this.buffer);
+};
+// Screen.prototype.lightText = function(input) {
+// 	var b = new Buffer(input.length*6);
+// 	b.fill(0x00);
+// 	input = input +"";
+// 	input.split("").map(function(c, i) {
+// 		var cd = c.charCodeAt(0)-32;
+// 		font.copy(b, i*6, cd*6, cd*6+6); 
+// 	});
+// 	this._sendData(b);
+// };
 
 
 function use(hardware, options, callback) {
